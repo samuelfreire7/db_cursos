@@ -22,3 +22,10 @@ model Alunos {
   curso_id Int
   curso    Cursos @relation(fields: [curso_id], references: [id])
 }
+
+model Users {
+  id    Int    @id @default(autoincrement())
+  nome  String
+  email String @unique
+  senha String
+}
