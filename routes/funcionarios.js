@@ -10,24 +10,24 @@ const prisma = new PrismaClient();
 
 // 🔐 LOGIN (gera token)
 router.post('/login', async (req, res) => {
-  const { email, senha } = req.body;
+  const { cargo, matricula } = req.body;
 
   try {
-    const user = await prisma.users.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    const funcionarios = await prisma.funcionarios.findUnique({ where: { matricula } });
+    if (!funcionarios) return res.status(404).json({ error: 'Funcionário não encontrado' });
 
-    const senhaConfere = await bcrypt.compare(senha, user.senha);
-    if (!senhaConfere) return res.status(401).json({ error: 'Senha incorreta' });
+    const matriculaConfere = await bcrypt.compare(matricula, funcionarios.matricula);
+    if (!matriculaConfere) return res.status(401).json({ error: 'Matricula incorreta' });
 
     // Gerar token JWT
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: funcionarios.id, email: funcionarios.email }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
 
     res.json({
       message: 'Login realizado com sucesso',
       token,
-      user: { id: user.id, nome: user.nome, email: user.email },
+      funcionarios: { id: funcionarios.id, nome: funcionarios.nome, cargo: funcionarios.cargo },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -36,13 +36,13 @@ router.post('/login', async (req, res) => {
 
 // 📥 CRIAR usuário
 router.post('/', async (req, res) => {
-  const { nome, email, senha } = req.body;
-  const hashedPassword = await bcrypt.hash(senha, 10);
+  const { nome, cargo, matricula } = req.body;
+  const hashedMatricula = await bcrypt.hash(matricula, 10);
   try {
-    const user = await prisma.users.create({
-      data: { nome, email, senha: hashedPassword },
+    const funcionarios = await prisma.funcionarios.create({
+      data: { nome, cargo, matricula: hashedMatricula },
     });
-    res.json(user);
+    res.json(funcionarios);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -50,29 +50,29 @@ router.post('/', async (req, res) => {
 
 // 🔐 LISTAR TODOS (com token obrigatório)
 router.get('/', verificarToken, async (req, res) => {
-  const users = await prisma.users.findMany();
-  res.json(users);
+  const funcionarios = await prisma.funcionarios.findMany();
+  res.json(funcionarios);
 });
 
 // 🔎 LISTAR POR ID
 router.get('/:id', verificarToken, async (req, res) => {
   const id = Number(req.params.id);
-  const user = await prisma.users.findUnique({ where: { id } });
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-  res.json(user);
+  const funcionarios = await prisma.funcionarios.findUnique({ where: { id } });
+  if (!funcionarios) return res.status(404).json({ error: 'Funcionário não encontrado' });
+  res.json(funcionarios);
 });
 
 // 🔄 ATUALIZAR usuário
 router.put('/:id', verificarToken, async (req, res) => {
   const { id } = req.params;
-  const { nome, email, senha } = req.body;
-  const hashedPassword = await bcrypt.hash(senha, 10);
+  const { nome, cargo, matricula } = req.body;
+  const hashedMatricula = await bcrypt.hash(matricula, 10);
   try {
-    const user = await prisma.users.update({
+    const funcionarios = await prisma.funcionarios.update({
       where: { id: parseInt(id) },
-      data: { nome, email, senha: hashedPassword },
+      data: { nome, cargo, matricula: hashedMatricula },
     });
-    res.json(user);
+    res.json(funcionarios);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -82,11 +82,11 @@ router.put('/:id', verificarToken, async (req, res) => {
 router.patch('/:id', verificarToken, async (req, res) => {
   const id = Number(req.params.id);
   try {
-    const updatedUser = await prisma.users.update({
+    const updatedFuncionarios = await prisma.funcionarios.update({
       where: { id },
       data: req.body,
     });
-    res.json(updatedUser);
+    res.json(updatedFuncionarios);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -96,10 +96,10 @@ router.patch('/:id', verificarToken, async (req, res) => {
 router.delete('/:id', verificarToken, async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.users.delete({
+    await prisma.funcionarios.delete({
       where: { id: parseInt(id) },
     });
-    res.json({ message: 'User deletado' });
+    res.json({ message: 'Funcionário deletado' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

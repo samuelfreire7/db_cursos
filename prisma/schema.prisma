@@ -29,3 +29,10 @@ model Users {
   email String @unique
   senha String
 }
+
+model Funcionarios {
+  id    Int    @id @default(autoincrement())
+  nome  String
+  cargo String
+  matricula String @unique
+}
